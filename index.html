@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agricultural Medicines</title>
+  <style>
+    body {
+      font-family: system-ui;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    button {
+      margin: 10px;
+    }
+
+    #addModal>div {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    #addModal,
+    #editModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 8px;
+      background-color: #fff;
+      grid-template-columns: 1fr 1fr;
+      border-radius: 8px;
+      width: 700px;
+      max-width: calc(100% - 20px);
+      z-index: 1;
+      gap: 16px;
+    }
+
+    #addModal .btns {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      flex-direction: row;
+
+    }
+
+    #addModal .btns button {
+      width: fit-content;
+
+    }
+
+    @media (max-width:768px) {
+      #addModal {
+        grid-template-columns: 1fr;
+
+      }
+    }
+
+    button {
+      all: unset;
+      padding: 8px 16px;
+      background-color: #eee;
+      color: #222222;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background-color: #006eff;
+      color: #ffffff;
+    }
+
+    button.error {
+      background-color: #ff0000;
+      color: #ffffff;
+    }
+
+    @media (min-width:767px) {
+      #addModal h2 {
+        grid-column: 2 span / 2 span;
+      }
+
+      #addModal .btns {
+        grid-column: 2 span / 2 span;
+
+      }
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+
+    .header-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    input,
+    select {
+      border: 1px solid #b4b4b4;
+      padding: 4px 8px;
+      border-radius: 8px;
+      min-width: 200px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>مركز البركه</h1>
+
+  <div class="header-btn">
+    <div>
+      <label>فلترة حسب التصنيف
+
+      </label>
+      <br> <select style="margin-top: 4px;" id="categoryFilter" onchange="filterTable()">
+        <option value="">الكل</option>
+        <option value="مغذيات">مغذيات</option>
+        <option value="حشرى">حشرى</option>
+        <option value="فطرى">فطرى</option>
+        <option value="حشائش">حشائش</option>
+        <option value="تسميد">تسميد</option>
+      </select>
+    </div>
+    <button class="primary" onclick="openAddModal()">اضافة جديد</button>
+
+  </div>
+  <table id="medicineTable">
+    <thead>
+      <tr>
+        <th>الاسم</th>
+        <th>التصنيف</th>
+        <th>المادة الفعالة</th>
+        <th>العلاج</th>
+        <th>الكمية (سم\فدان) </th>
+        <th>السعر</th>
+        <th>حذف</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+
+
+  <form id="addModal">
+    <h2>اضافة جديد</h2>
+    <div>
+      <label>الاسم </label><input type="text" id="name">
+    </div>
+    <div>
+      <label>التصنيف
+
+      </label><select id="category">
+        <option value="مغذيات">مغذيات</option>
+        <option value="حشرى">حشرى</option>
+        <option value="فطرى">فطرى</option>
+        <option value="حشائش">حشائش</option>
+        <option value="تسميد">تسميد</option>
+      </select>
+    </div>
+    <div>
+      <label>المادة الفعالة </label><input type="text" id="activeIngredient">
+
+    </div>
+    <div>
+      <label>العلاج </label><input type="text" id="treatment">
+    </div>
+    <div>
+
+      <label>الكمية (سم\فدان) </label><input type="text" id="rate">
+    </div>
+    <div>
+      <label>السعر </label><input type="text" id="price">
+
+    </div>
+    <div class="btns">
+      <button type="button" class="primary" onclick="addMedicine()">اضافة</button>
+      <button type="button" onclick="closeAddModal()">تراجع</button>
+    </div>
+  </form>
+
+  <div id="overlay"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      displayMedicines();
+    });
+
+    function displayMedicines() {
+      const medicineTable = document.getElementById("medicineTable").getElementsByTagName('tbody')[0];
+      medicineTable.innerHTML = "";
+
+      // Fetch medicines from localStorage
+      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+
+      medicines.forEach(medicine => {
+        const row = medicineTable.insertRow();
+        row.insertCell(0).innerHTML = medicine.name;
+        row.insertCell(1).innerHTML = medicine.category;
+        row.insertCell(2).innerHTML = medicine.activeIngredient;
+        row.insertCell(3).innerHTML = medicine.treatment;
+        row.insertCell(4).innerHTML = medicine.rate;
+        row.insertCell(5).innerHTML = medicine.price;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.innerHTML = "حذف";
+        deleteButton.classList.add('error')
+        deleteButton.onclick = function () {
+          deleteMedicine(medicine.name);
+        };
+
+        row.insertCell(6).appendChild(deleteButton);
+      });
+    }
+
+    function openAddModal() {
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("addModal").style.display = "grid";
+    }
+
+    function closeAddModal() {
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("addModal").style.display = "none";
+      document.getElementById("addModal").reset();
+
+    }
+
+    function addMedicine() {
+      const name = document.getElementById("name").value;
+      const category = document.getElementById("category").value;
+      const activeIngredient = document.getElementById("activeIngredient").value;
+      const treatment = document.getElementById("treatment").value;
+      const rate = document.getElementById("rate").value;
+      const price = document.getElementById("price").value;
+
+      const newMedicine = {
+        name: name,
+        category: category,
+        activeIngredient: activeIngredient,
+        treatment: treatment,
+        rate: rate,
+        price: price
+      };
+
+      // Fetch medicines from localStorage
+      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+
+      // Check if the medicine with the same name already exists
+      const existingMedicine = medicines.find(med => med.name === name);
+      if (existingMedicine) {
+        alert(" موجود قبل كده يابغل");
+        return;
+      }
+
+      // Add the new medicine to the array
+      medicines.push(newMedicine);
+
+      // Save the updated array back to localStorage
+      localStorage.setItem('medicines', JSON.stringify(medicines));
+
+      // Close the modal and refresh the table
+      closeAddModal();
+      displayMedicines();
+    }
+
+    function deleteMedicine(name) {
+      // Fetch medicines from localStorage
+      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+
+      // Filter out the medicine to be deleted
+      const updatedMedicines = medicines.filter(medicine => medicine.name !== name);
+
+      // Save the updated array back to localStorage
+      localStorage.setItem('medicines', JSON.stringify(updatedMedicines));
+
+      // Refresh the table
+      displayMedicines();
+    }
+
+    function filterTable() {
+      const categoryFilter = document.getElementById("categoryFilter").value;
+      const medicineTable = document.getElementById("medicineTable").getElementsByTagName('tbody')[0];
+      const rows = medicineTable.getElementsByTagName('tr');
+
+      for (let i = 0; i < rows.length; i++) {
+        const categoryCell = rows[i].getElementsByTagName('td')[1];
+
+        if (categoryFilter === '' || categoryCell.innerHTML === categoryFilter) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    }
+  </script>
+
+</body>
+
+</html>
