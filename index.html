@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agricultural Medicines</title>
+  <title>Ahmed Abdo</title>
   <style>
     body {
       font-family: system-ui;
@@ -123,7 +123,7 @@
     .header-btn {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: end;
     }
 
     input,
@@ -155,23 +155,29 @@
         <option value="تسميد">تسميد</option>
       </select>
     </div>
-    <button class="primary" onclick="openAddModal()">اضافة جديد</button>
+    <button class="primary" onclick="openAddModal()">اضافة</button>
 
   </div>
-  <table id="medicineTable">
-    <thead>
-      <tr>
-        <th>الاسم</th>
-        <th>التصنيف</th>
-        <th>المادة الفعالة</th>
-        <th>العلاج</th>
-        <th>الكمية (سم\فدان) </th>
-        <th>السعر</th>
-        <th>حذف</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+
+  <div style="overflow: hidden;width: 100%;">
+    <div style="overflow: auto; ">
+      <table id="medicineTable">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>التصنيف</th>
+            <th>المادة الفعالة</th>
+            <th>العلاج</th>
+            <th>الكمية (سم\فدان) </th>
+            <th>السعر</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+    </div>
+  </div>
 
 
 
