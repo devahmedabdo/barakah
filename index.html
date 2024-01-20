@@ -31,7 +31,8 @@
       margin: 10px;
     }
 
-    #addModal>div {
+    #addModal>div,
+    #editModal>div {
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -58,7 +59,8 @@
       gap: 16px;
     }
 
-    #addModal .btns {
+    #addModal .btns,
+    #editModal .btns {
       display: flex;
       width: 100%;
       justify-content: space-between;
@@ -66,13 +68,16 @@
 
     }
 
-    #addModal .btns button {
+    #addModal .btns button,
+    #editModal .btns button {
       width: fit-content;
 
     }
 
     @media (max-width:768px) {
-      #addModal {
+
+      #addModal,
+      #editModal {
         grid-template-columns: 1fr;
 
       }
@@ -99,11 +104,14 @@
     }
 
     @media (min-width:767px) {
-      #addModal h2 {
+
+      #addModal h2,
+      #editModal h2 {
         grid-column: 2 span / 2 span;
       }
 
-      #addModal .btns {
+      #addModal .btns,
+      #editModal .btns {
         grid-column: 2 span / 2 span;
 
       }
@@ -123,6 +131,7 @@
     .header-btn {
       display: flex;
       justify-content: space-between;
+      flex-wrap: wrap;
       align-items: end;
     }
 
@@ -134,6 +143,19 @@
       min-width: 200px;
       font-size: 20px;
     }
+
+    @media print {
+      .no-print {
+        display: none;
+      }
+
+      tbody tr td:nth-child(7),
+      tbody tr td:nth-child(8) {
+        display: none;
+      }
+
+
+    }
   </style>
 </head>
 
@@ -141,12 +163,13 @@
 
   <h1>مركز البركه</h1>
 
-  <div class="header-btn">
-    <div>
-      <label>فلترة حسب التصنيف
+  <!-- Search Input -->
 
-      </label>
-      <br> <select style="margin-top: 4px;" id="categoryFilter" onchange="filterTable()">
+  <div class="header-btn no-print">
+    <div>
+      <label>فلترة حسب التصنيف</label>
+      <br>
+      <select style="margin-top: 4px;" id="categoryFilter" onchange="filterTable()">
         <option value="">الكل</option>
         <option value="مغذيات">مغذيات</option>
         <option value="حشرى">حشرى</option>
@@ -155,8 +178,15 @@
         <option value="تسميد">تسميد</option>
       </select>
     </div>
-    <button class="primary" onclick="openAddModal()">اضافة</button>
+    <div>
+      <label for="search">البحث بالاسم: </label> <br>
+      <input type="text" id="search" oninput="searchTable()" placeholder="ابحث بالاسم...">
 
+    </div>
+    <div>
+      <button class="primary" onclick="openAddModal()">اضافة</button>
+      <button class="primary" onclick="window.print()">طباعة</button>
+    </div>
   </div>
 
   <div style="overflow: hidden;width: 100%;">
@@ -170,15 +200,14 @@
             <th>العلاج</th>
             <th>الكمية (سم\فدان) </th>
             <th>السعر</th>
-            <th>حذف</th>
+            <th class="no-print">حذف</th>
+            <th class="no-print">تعديل</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-
     </div>
   </div>
-
 
 
   <form id="addModal">
@@ -218,39 +247,43 @@
     </div>
   </form>
 
+  <form id="editModal">
+    <h2>تعديل</h2>
+    <div>
+      <label>الاسم </label><input type="text" id="editName">
+    </div>
+    <div>
+      <label>التصنيف </label><select id="editCategory">
+        <option value="مغذيات">مغذيات</option>
+        <option value="حشرى">حشرى</option>
+        <option value="فطرى">فطرى</option>
+        <option value="حشائش">حشائش</option>
+        <option value="تسميد">تسميد</option>
+      </select>
+    </div>
+    <div>
+      <label>المادة الفعالة </label><input type="text" id="editActiveIngredient">
+    </div>
+    <div>
+      <label>العلاج </label><input type="text" id="editTreatment">
+    </div>
+    <div>
+      <label>الكمية (سم\فدان) </label><input type="text" id="editRate">
+    </div>
+    <div>
+      <label>السعر </label><input type="text" id="editPrice">
+    </div>
+    <div class="btns">
+      <button type="button" class="primary" id="editBtn">تعديل</button>
+      <button type="button" onclick="closeEditModal()">تراجع</button>
+    </div>
+  </form>
   <div id="overlay"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       displayMedicines();
     });
-
-    function displayMedicines() {
-      const medicineTable = document.getElementById("medicineTable").getElementsByTagName('tbody')[0];
-      medicineTable.innerHTML = "";
-
-      // Fetch medicines from localStorage
-      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
-
-      medicines.forEach(medicine => {
-        const row = medicineTable.insertRow();
-        row.insertCell(0).innerHTML = medicine.name;
-        row.insertCell(1).innerHTML = medicine.category;
-        row.insertCell(2).innerHTML = medicine.activeIngredient;
-        row.insertCell(3).innerHTML = medicine.treatment;
-        row.insertCell(4).innerHTML = medicine.rate;
-        row.insertCell(5).innerHTML = medicine.price;
-
-        const deleteButton = document.createElement("button");
-        deleteButton.innerHTML = "حذف";
-        deleteButton.classList.add('error')
-        deleteButton.onclick = function () {
-          deleteMedicine(medicine.name);
-        };
-
-        row.insertCell(6).appendChild(deleteButton);
-      });
-    }
 
     function openAddModal() {
       document.getElementById("overlay").style.display = "block";
@@ -302,6 +335,98 @@
       displayMedicines();
     }
 
+    function displayMedicines() {
+      const medicineTable = document.getElementById("medicineTable").getElementsByTagName('tbody')[0];
+      medicineTable.innerHTML = "";
+
+      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+      const searchInput = document.getElementById("search").value.toLowerCase();
+
+      medicines.forEach(medicine => {
+        if (medicine.name.toLowerCase().includes(searchInput)) {
+          const row = medicineTable.insertRow();
+          row.insertCell(0).innerHTML = medicine.name;
+          row.insertCell(1).innerHTML = medicine.category;
+          row.insertCell(2).innerHTML = medicine.activeIngredient;
+          row.insertCell(3).innerHTML = medicine.treatment;
+          row.insertCell(4).innerHTML = medicine.rate;
+          row.insertCell(5).innerHTML = medicine.price;
+          const deleteButton = document.createElement("button");
+          deleteButton.innerHTML = "حذف";
+          deleteButton.classList.add('error');
+          deleteButton.onclick = function () {
+            deleteMedicine(medicine.name);
+          };
+          row.insertCell(6).appendChild(deleteButton);
+
+          const editButton = document.createElement("button");
+          editButton.innerHTML = "تعديل";
+          editButton.classList.add('primary');
+          editButton.onclick = function () {
+            openEditModal(medicine);
+          };
+          row.insertCell(7).appendChild(editButton);
+        }
+      });
+    }
+
+    function openEditModal(medicine) {
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("editModal").style.display = "grid";
+
+      document.getElementById("editName").value = medicine.name;
+      document.getElementById("editCategory").value = medicine.category;
+      document.getElementById("editActiveIngredient").value = medicine.activeIngredient;
+      document.getElementById("editTreatment").value = medicine.treatment;
+      document.getElementById("editRate").value = medicine.rate;
+      document.getElementById("editPrice").value = medicine.price;
+
+      document.getElementById("editBtn").onclick = function () {
+        editMedicine(medicine.name);
+      };
+    }
+
+    function editMedicine(name) {
+      const editedMedicine = {
+        name: document.getElementById("editName").value,
+        category: document.getElementById("editCategory").value,
+        activeIngredient: document.getElementById("editActiveIngredient").value,
+        treatment: document.getElementById("editTreatment").value,
+        rate: document.getElementById("editRate").value,
+        price: document.getElementById("editPrice").value,
+      };
+
+      const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
+      const index = medicines.findIndex(med => med.name === name);
+      medicines[index] = editedMedicine;
+
+      localStorage.setItem('medicines', JSON.stringify(medicines));
+
+      closeEditModal();
+      displayMedicines();
+    }
+
+    function closeEditModal() {
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("editModal").style.display = "none";
+      document.getElementById("editModal").reset();
+    }
+
+    function searchTable() {
+      const searchInput = document.getElementById("search").value.toLowerCase();
+      const medicineTable = document.getElementById("medicineTable").getElementsByTagName('tbody')[0];
+      const rows = medicineTable.getElementsByTagName('tr');
+
+      for (let i = 0; i < rows.length; i++) {
+        const nameCell = rows[i].getElementsByTagName('td')[0];
+
+        if (nameCell.innerHTML.toLowerCase().includes(searchInput)) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    }
     function deleteMedicine(name) {
       // Fetch medicines from localStorage
       const medicines = JSON.parse(localStorage.getItem('medicines')) || [];
@@ -331,6 +456,7 @@
         }
       }
     }
+
   </script>
 
 </body>
